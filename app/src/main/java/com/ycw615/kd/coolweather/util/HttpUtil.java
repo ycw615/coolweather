@@ -1,5 +1,7 @@
 package com.ycw615.kd.coolweather.util;
 
+import android.widget.Toast;
+
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
