@@ -1,5 +1,7 @@
 package com.ycw615.kd.coolweather.activity;
 
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
@@ -7,16 +9,18 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.Window;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.ycw615.kd.coolweather.R;
 import com.ycw615.kd.coolweather.util.HttpCallbackListener;
 import com.ycw615.kd.coolweather.util.HttpUtil;
 import com.ycw615.kd.coolweather.util.Utility;
 
-public class WeatherActivity extends AppCompatActivity {
+import java.io.BufferedReader;
+
+public class WeatherActivity extends AppCompatActivity implements View.OnClickListener {
     private LinearLayout weatherInfoLayout;
 
     /**
@@ -43,6 +47,14 @@ public class WeatherActivity extends AppCompatActivity {
      * 用于显示当前日期
      */
     private TextView currentDateText;
+    /**
+     * 切换城市按钮
+     */
+    private Button switchCity;
+    /**
+     * 更新天气按钮
+     */
+    private Button refreshWeather;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,19 +70,20 @@ public class WeatherActivity extends AppCompatActivity {
         temp2Text = (TextView) findViewById(R.id.temp2);
         currentDateText = (TextView) findViewById(R.id.current_date);
         String countyCode = getIntent().getStringExtra("county_code");
-        //Toast.makeText(WeatherActivity.this, "77777777777777777777", Toast.LENGTH_LONG).show();
         if (!TextUtils.isEmpty(countyCode)){
             //有县级代号时就去查询天气
-            //Toast.makeText(WeatherActivity.this, "县代码："+countyCode, Toast.LENGTH_LONG).show();
             publishText.setText("同步中...");
             weatherInfoLayout.setVisibility(View.INVISIBLE);
             cityNameText.setVisibility(View.INVISIBLE);
             queryWeatherCode(countyCode);
         }else {
-            //Toast.makeText(WeatherActivity.this, "现代码为空", Toast.LENGTH_LONG).show();
             //没有县级代码时就直接显示本地天气
             showWeather();
         }
+        switchCity = (Button) findViewById(R.id.switch_city);
+        refreshWeather = (Button) findViewById(R.id.refresh_weather);
+        switchCity.setOnClickListener(this);
+        refreshWeather.setOnClickListener(this);
     }
 
     /**
@@ -79,7 +92,6 @@ public class WeatherActivity extends AppCompatActivity {
     private void queryWeatherCode(String countyCode){
         String address = "http://www.weather.com.cn/data/list3/city" +
                 countyCode + ".xml";
-        //Toast.makeText(WeatherActivity.this, address, Toast.LENGTH_SHORT).show();
         queryFromServer(address,"countyCode");
     }
 
@@ -100,21 +112,17 @@ public class WeatherActivity extends AppCompatActivity {
             @Override
             public void onFinish(String response) {
                 if ("countyCode".equals(type)){
-                    //Toast.makeText(WeatherActivity.this, response, Toast.LENGTH_LONG).show();
                     if (!TextUtils.isEmpty(response)){
                         //从服务器返回的数据中解析出天气代号
                         String[] array = response.split("\\|");
-                        //Toast.makeText(WeatherActivity.this, array[0]+":"+array[1], Toast.LENGTH_LONG).show();
                         if (array != null && array.length == 2){
                             String weatherCode = array[1];
-                            //Toast.makeText(WeatherActivity.this, "天气代码："+weatherCode, Toast.LENGTH_LONG).show();
                             queryWeatherInfo(weatherCode);
                         }
                     }
                 }else if ("weatherCode".equals(type)){
                     //处理服务器返回的天气信息
                     Utility.handleWeatherResponse(WeatherActivity.this,response);
-                    //Toast.makeText(WeatherActivity.this, "ycw.....", Toast.LENGTH_SHORT).show();
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -129,9 +137,8 @@ public class WeatherActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        //publishText.setText("同步失败");
-                        //Toast.makeText(WeatherActivity.this, e.toString(), Toast.LENGTH_SHORT).show();
-                        publishText.setText(e.toString());
+                        publishText.setText("同步失败");
+                        //publishText.setText(e.toString());
                     }
                 });
             }
@@ -151,5 +158,27 @@ public class WeatherActivity extends AppCompatActivity {
         currentDateText.setText(prefs.getString("current_date",""));
         weatherInfoLayout.setVisibility(View.VISIBLE);
         cityNameText.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()){
+            case R.id.switch_city:
+                Intent intent = new Intent(WeatherActivity.this,ChooseAreaActivity.class);
+                intent.putExtra("from_weather_activity",true);
+                startActivity(intent);
+                finish();
+                break;
+            case R.id.refresh_weather:
+                publishText.setText("同步中...");
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+                String weatherCode = prefs.getString("weather_code","");
+                if (!TextUtils.isEmpty(weatherCode)){
+                    queryWeatherInfo(weatherCode);
+                }
+                break;
+            default:
+                break;
+        }
     }
 }

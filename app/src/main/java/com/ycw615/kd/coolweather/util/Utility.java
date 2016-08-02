@@ -16,7 +16,6 @@ import org.json.JSONObject;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-import java.util.prefs.PreferenceChangeEvent;
 
 /**
  * Created by yaochengwei on 2016/7/29.
@@ -102,8 +101,8 @@ public class Utility {
             String temp1 = weatherInfo.getString("temp1");
             String temp2 = weatherInfo.getString("temp2");
             String weatherDesp = weatherInfo.getString("weather");
-            String publistTime = weatherInfo.getString("ptime");
-            saveWeatherInfo(context,cityName,weatherCode,temp1,temp2,weatherDesp,publistTime);
+            String publishTime = weatherInfo.getString("ptime");
+            saveWeatherInfo(context,cityName,weatherCode,temp1,temp2,weatherDesp,publishTime);
         }catch (JSONException e){
             e.printStackTrace();
         }
